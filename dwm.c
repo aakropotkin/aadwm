@@ -41,6 +41,7 @@
 #endif /* XINERAMA */
 #include <X11/Xft/Xft.h>
 
+#include "dwm.h"
 #include "drw.h"
 #include "util.h"
 
@@ -131,15 +132,6 @@ struct Monitor {
   Window barwin;
   const Layout *lt[2];
 };
-
-typedef struct {
-  const char *class;
-  const char *instance;
-  const char *title;
-  unsigned int tags;
-  int isfloating;
-  int monitor;
-} Rule;
 
 /* function declarations */
 static void applyrules(Client *c);
@@ -295,7 +287,7 @@ applyrules(Client *c)
   for (i = 0; i < LENGTH(rules); i++) {
     r = &rules[i];
     if ((!r->title || strstr(c->name, r->title))
-    && (!r->class || strstr(class, r->class))
+    && (!r->r_class || strstr(class, r->r_class))
     && (!r->instance || strstr(instance, r->instance)))
     {
       c->isfloating = r->isfloating;

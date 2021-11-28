@@ -3,6 +3,9 @@
 
 include config.mk
 
+dwm.o: dwm.h
+config.h: dwm.h
+
 SRC = drw.c dwm.c util.c
 OBJ = ${SRC:.c=.o}
 
