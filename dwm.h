@@ -21,7 +21,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
-
+enum { MonPrev, MonNext, Mon0, Mon1, Mon2 };  /* Monitors */
 
 /* -------------------------------------------------------------------------- */
 
