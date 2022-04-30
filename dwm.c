@@ -702,10 +702,10 @@ dirtomon(unsigned int dir)
     for (m = mons; m->next != selmon; m = m->next);
   else if (dir == Mon0)
     m = mons;
-  else if (dir == Mon1)
-    m = mons->next;
-  else if (dir == Mon2)
+  else if (dir == Mon1) /* This is specific to Alonso */
     m = mons->next->next;
+  else if (dir == Mon2) /* No, the ordering is not sequential */
+    m = mons->next;
   return m;
 }
 
