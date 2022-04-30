@@ -696,16 +696,16 @@ dirtomon(unsigned int dir)
   if (dir == MonNext) {
     if (!(m = selmon->next))
       m = mons;
-  } else if (selmon == mons)
+  } else if ( (dir == MonPrev) && (selmon == mons) )
     for (m = mons; m->next; m = m->next);
   else if (dir == MonPrev)
     for (m = mons; m->next != selmon; m = m->next);
   else if (dir == Mon0)
     m = mons;
   else if (dir == Mon1)
-    m = mons + 1;
+    m = mons->next;
   else if (dir == Mon2)
-    m = mons + 2;
+    m = mons->next->next;
   return m;
 }
 
