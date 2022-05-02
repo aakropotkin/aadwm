@@ -143,7 +143,7 @@ static void setclientstate( Client * c, long state );
 static void setfocus( Client * c );
 static void setfullscreen( Client * c, int fullscreen );
 static void setlayout( const Arg * arg );
-static void inclayout( int );
+static void inclayout( const Arg * arg );
 static void setmfact( const Arg * arg );
 static void setup( void );
 static void seturgent( Client * c, int urg );
@@ -1660,10 +1660,9 @@ setlayout( const Arg * arg )
 /* -------------------------------------------------------------------------- */
 
   void
-inclayout( int x )
+inclayout( const Arg * arg )
 {
   unsigned int i;
-  Arg arg = {0};
   if ( x == 0 ) x = 1;
   /* Find index of current layout. */
   for ( i = 0;
@@ -1672,9 +1671,9 @@ inclayout( int x )
         i++
       ) noop;
   /* Increment by the given amount and wrap if necessary. */
-  i = ( i + ( x % LENGTH( layouts ) ) + LENGTH( layouts ) ) % LENGTH( layouts );
+  i = ( i + arg->i + LENGTH( layouts ) ) % LENGTH( layouts );
   arg.v = & layouts[i];
-  setlayout( & arg );
+  setlayout( arg );
 }
 
 
