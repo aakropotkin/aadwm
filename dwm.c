@@ -1663,7 +1663,8 @@ setlayout( const Arg * arg )
 inclayout( const Arg * arg )
 {
   unsigned int i;
-  if ( x == 0 ) x = 1;
+  Arg narg = {0};
+  if ( arg->i == 0 ) return;
   /* Find index of current layout. */
   for ( i = 0;
         ( i < LENGTH( layouts ) )
@@ -1672,8 +1673,8 @@ inclayout( const Arg * arg )
       ) noop;
   /* Increment by the given amount and wrap if necessary. */
   i = ( i + arg->i + LENGTH( layouts ) ) % LENGTH( layouts );
-  arg.v = & layouts[i];
-  setlayout( arg );
+  narg.v = & layouts[i];
+  setlayout( & narg );
 }
 
 
