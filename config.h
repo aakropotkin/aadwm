@@ -83,6 +83,7 @@ static Key keys[] = {
   { MODKEY|ShiftMask,    XK_k,      incnmaster,     {.i = -1 } },
   //{ MODKEY,              XK_i,      incnmaster,     {.i = +1 } },
   //{ MODKEY,              XK_d,      incnmaster,     {.i = -1 } },
+  { MODKEY,              XK_d,      spawn,          {.v = soundcmd } },
   { MODKEY,              XK_h,      setmfact,       {.f = -0.05} },
   { MODKEY,              XK_l,      setmfact,       {.f = +0.05} },
   { MODKEY,              XK_Return, zoom,           {0} },

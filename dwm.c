@@ -143,7 +143,7 @@ static void setclientstate( Client * c, long state );
 static void setfocus( Client * c );
 static void setfullscreen( Client * c, int fullscreen );
 static void setlayout( const Arg * arg );
-static void inclayout( int x );
+static void inclayout( int );
 static void setmfact( const Arg * arg );
 static void setup( void );
 static void seturgent( Client * c, int urg );
@@ -152,7 +152,7 @@ static void sigchld( int unused );
 static void spawn( const Arg * arg );
 static void tag( const Arg * arg );
 static void tagmon( const Arg * arg );
-static void tile( Monitor * );
+static void tile_vsplit( Monitor * );
 static void tile_hsplit( Monitor * );
 static void togglebar( const Arg * arg );
 static void togglefloating( const Arg * arg );
@@ -1673,7 +1673,7 @@ inclayout( int x )
       ) noop;
   /* Increment by the given amount and wrap if necessary. */
   i = ( i + ( x % LENGTH( layouts ) ) + LENGTH( layouts ) ) % LENGTH( layouts );
-  arg.v = &layouts[i]
+  arg.v = & layouts[i];
   setlayout( & arg );
 }
 
@@ -1863,10 +1863,8 @@ tagmon(const Arg *arg)
 
 /* -------------------------------------------------------------------------- */
 
-#define tile_vsplit(M) tile(M)
-
   void
-tile( Monitor * m )
+tile_vsplit( Monitor * m )
 {
   unsigned int   i  = 0;     /* Client index */
   unsigned int   n  = 0;     /* Number of clients */
