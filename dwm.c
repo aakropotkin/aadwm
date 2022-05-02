@@ -143,6 +143,7 @@ static void setclientstate( Client * c, long state );
 static void setfocus( Client * c );
 static void setfullscreen( Client * c, int fullscreen );
 static void setlayout( const Arg * arg );
+static void inclayout( int x );
 static void setmfact( const Arg * arg );
 static void setup( void );
 static void seturgent( Client * c, int urg );
@@ -152,6 +153,7 @@ static void spawn( const Arg * arg );
 static void tag( const Arg * arg );
 static void tagmon( const Arg * arg );
 static void tile( Monitor * );
+static void tile_hsplit( Monitor * );
 static void togglebar( const Arg * arg );
 static void togglefloating( const Arg * arg );
 static void toggletag( const Arg * arg );
@@ -638,7 +640,7 @@ createmon(void)
   m->showbar = showbar;
   m->topbar = topbar;
   m->lt[0] = &layouts[0];
-  m->lt[1] = &layouts[1 % LENGTH(layouts)];
+  m->lt[1] = &layouts[1 % LENGTH( layouts )];
   strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
   return m;
 }
@@ -1634,25 +1636,52 @@ setfullscreen(Client *c, int fullscreen)
 
 /* -------------------------------------------------------------------------- */
 
-void
-setlayout(const Arg *arg)
+  void
+setlayout( const Arg * arg )
 {
-  if (!arg || !arg->v || arg->v != selmon->lt[selmon->sellt])
-    selmon->sellt ^= 1;
-  if (arg && arg->v)
-    selmon->lt[selmon->sellt] = (Layout *)arg->v;
-  strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
-  if (selmon->sel)
-    arrange(selmon);
-  else
-    drawbar(selmon);
+  /* Toggle float  */
+  if ( ( ! arg ) || ( ! arg->v ) || ( arg->v != selmon->lt[selmon->sellt] ) )
+    {
+      selmon->sellt ^= 1;
+    }
+
+  if ( arg && arg->v ) selmon->lt[selmon->sellt] = (Layout *) arg->v;
+
+  strncpy( selmon->ltsymbol,
+           selmon->lt[selmon->sellt]->symbol,
+           sizeof( selmon->ltsymbol )
+         );
+
+  if ( selmon->sel ) arrange( selmon );
+  else               drawbar( selmon );
+}
+
+
+/* -------------------------------------------------------------------------- */
+
+  void
+inclayout( int x )
+{
+  unsigned int i;
+  Arg arg = {0};
+  if ( x == 0 ) x = 1;
+  /* Find index of current layout. */
+  for ( i = 0;
+        ( i < LENGTH( layouts ) )
+        &&  ( selmon->lt[selmon->sellt]!= &layouts[i] );
+        i++
+      ) noop;
+  /* Increment by the given amount and wrap if necessary. */
+  i = ( i + ( x % LENGTH( layouts ) ) + LENGTH( layouts ) ) % LENGTH( layouts );
+  arg.v = &layouts[i]
+  setlayout( & arg );
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 /* arg > 1.0 will set mfact absolutely */
-void
+  void
 setmfact(const Arg *arg)
 {
   float f;
@@ -1834,38 +1863,151 @@ tagmon(const Arg *arg)
 
 /* -------------------------------------------------------------------------- */
 
-void
-tile(Monitor *m)
+#define tile_vsplit(M) tile(M)
+
+  void
+tile( Monitor * m )
 {
-  unsigned int i, n, h, mw, my, ty;
-  Client *c;
+  unsigned int   i  = 0;     /* Client index */
+  unsigned int   n  = 0;     /* Number of clients */
+  unsigned int   h  = 0;     /* Client height */
+  unsigned int   mw = 0;     /* Master width */
+  unsigned int   my = 0;     /* Master Y pos */
+  unsigned int   ty = 0;     /* Regular-Tile Y pos */
+  Client       * c  = NULL;
 
-  for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
-  if (n == 0)
-    return;
+  /* Count number of clients. */
+  for ( n = 0, c = nexttiled( m->clients );
+        c != NULL;
+        c = nexttiled( c->next ), n++
+      ) noop;
 
-  if (n > m->nmaster)
-    mw = m->nmaster ? m->ww * m->mfact : 0;
-  else
-    mw = m->ww;
-  for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-    if (i < m->nmaster) {
-      h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-      resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-      if (my + HEIGHT(c) < m->wh)
-        my += HEIGHT(c);
-    } else {
-      h = (m->wh - ty) / (n - i);
-      resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-      if (ty + HEIGHT(c) < m->wh)
-        ty += HEIGHT(c);
+  /* If there aren't any clients bail out. */
+  if ( n == 0 ) return;
+
+  /* The "master tile" is usually on the left, and clients have to be explicitly
+   * added to it.
+   * With that in mind, it generally has 1 client that takes the full screen
+   * height, and splits the screen width.
+   * The "split width" is not necessarily 1/2 of the screen width, instead it
+   * is set by a % multiplier, `mfact' ( master factor ).
+   * The default `mfact' used by a monitor is set in `config.h', and DWM ships
+   * with it set to 0.55 ( 55% ).
+   */
+  if      ( m->nmaster == 0 ) mw = 0;                 /* Empty */
+  else if ( m->nmaster < n )  mw = m->ww * m->mfact;  /* Split vertically */
+  else                        mw = m->ww;             /* Full width */
+
+  /* Resize and move clients. */
+  for ( i = 0, my = 0, ty = 0, c = nexttiled( m->clients );
+        c != NULL;
+        c = nexttiled( c->next ), i++
+      )
+    {
+      /* Handle members of the master tile vs reular tile. */
+      if ( i < m->nmaster )
+        {
+          /* Client height is:
+           *   ( "window area height" - "master Y pos" )
+           *   Scaled by the number of clients in the master tile.
+           *   I have literally no idea why `i' effects the scalar...
+           * NOTE: Remember X11 positions are (0, 0) at the top left.
+           */
+          h = ( m->wh - my ) / ( MIN( n, m->nmaster ) - i );
+          /* `bw' is border width.
+           * This is the colored highlight around the focused client.
+           */
+          resize( c,                   /* client */
+                  m->wx,               /* X pos */
+                  m->wy + my,          /* Y pos */
+                  mw - ( 2 * c->bw ),  /* width */
+                  h - ( 2 * c->bw ),   /* height */
+                  0                    /* interactive (bool) */
+                );
+          /* Increment the master Y position so we know where to put the next
+           * member of the master tile ( if any ). */
+          if ( my + HEIGHT( c ) < m->wh ) my += HEIGHT( c );
+        }
+      else
+        {
+          h = ( m->wh - ty ) / ( n - i );
+          resize( c,                           /* client */
+                  m->wx + mw,                  /* X pos */
+                  m->wy + ty,                  /* Y pos */
+                  m->ww - mw - ( 2 * c->bw ),  /* width */
+                  h - ( 2 * c->bw ),           /* height */
+                  0                            /* interactive (bool) */
+                );
+          if ( ty + HEIGHT( c ) < m->wh ) ty += HEIGHT( c );
+        }
     }
 }
 
+/* -------------------------------------------------------------------------- */
+
+  void
+tile_hsplit( Monitor * m )
+{
+  unsigned int   i  = 0;     /* Client index */
+  unsigned int   n  = 0;     /* Number of clients */
+  unsigned int   w  = 0;     /* Client width */
+  unsigned int   mh = 0;     /* Master height */
+  unsigned int   mx = 0;     /* Master X pos */
+  unsigned int   tx = 0;     /* Regular-Tile X pos */
+  Client       * c  = NULL;
+
+  /* Count number of clients. */
+  for ( n = 0, c = nexttiled( m->clients );
+        c != NULL;
+        c = nexttiled( c->next ), n++
+      ) noop;
+
+  /* If there aren't any clients bail out. */
+  if ( n == 0 ) return;
+
+  if      ( m->nmaster == 0 ) mh = 0;                 /* Empty */
+  else if ( m->nmaster < n )  mh = m->wh * m->mfact;  /* Split horizontally */
+  else                        mh = m->wh;             /* Full height */
+
+  /* Resize and move clients. */
+  for ( i = 0, mx = 0, tx = 0, c = nexttiled( m->clients );
+        c != NULL;
+        c = nexttiled( c->next ), i++
+      )
+    {
+      /* Handle members of the master tile vs reular tile. */
+      if ( i < m->nmaster )
+        {
+          w = ( m->ww - mx ) / ( MIN( n, m->nmaster ) - i );
+          resize( c,                   /* client */
+                  m->wx + mx,          /* X pos */
+                  m->wy,               /* Y pos */
+                  w - ( 2 * c->bw ),   /* width */
+                  mh - ( 2 * c->bw ),  /* height */
+                  0                    /* interactive (bool) */
+                );
+          /* Increment the master X position so we know where to put the next
+           * member of the master tile ( if any ). */
+          if ( mx + WIDTH( c ) < m->ww ) mx += WIDTH( c );
+        }
+      else
+        {
+          w = ( m->ww - tx ) / ( n - i );
+          resize( c,                           /* client */
+                  m->wx + tx,                  /* X pos */
+                  m->wy + mh,                  /* Y pos */
+                  w - ( 2 * c->bw ),           /* width */
+                  m->wh - mh - ( 2 * c->bw ),  /* height */
+                  0                            /* interactive (bool) */
+                );
+          if ( tx + WIDTH( c ) < m->ww ) tx += WIDTH( c );
+        }
+    }
+}
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 togglebar(const Arg *arg)
 {
   selmon->showbar = !selmon->showbar;
@@ -1877,137 +2019,146 @@ togglebar(const Arg *arg)
 
 /* -------------------------------------------------------------------------- */
 
-void
-togglefloating(const Arg *arg)
+  void
+togglefloating( const Arg * arg )
 {
-  if (!selmon->sel)
-    return;
-  if (selmon->sel->isfullscreen) /* no support for fullscreen windows */
-    return;
-  selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
-  if (selmon->sel->isfloating)
-    resize(selmon->sel, selmon->sel->x, selmon->sel->y,
-      selmon->sel->w, selmon->sel->h, 0);
-  arrange(selmon);
+  if ( ! selmon->sel ) return;
+  if ( selmon->sel->isfullscreen ) return; /* no support for fullscreen */
+  selmon->sel->isfloating = ( ! selmon->sel->isfloating )
+                            || selmon->sel->isfixed;
+  if ( selmon->sel->isfloating )
+    {
+      resize( selmon->sel,
+              selmon->sel->x, selmon->sel->y,
+              selmon->sel->w, selmon->sel->h,
+              0
+            );
+    }
+  arrange( selmon );
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-toggletag(const Arg *arg)
+  void
+toggletag( const Arg * arg )
 {
-  unsigned int newtags;
+  unsigned int newtags = 0;
 
-  if (!selmon->sel)
-    return;
-  newtags = selmon->sel->tags ^ (arg->ui & TAGMASK);
-  if (newtags) {
-    selmon->sel->tags = newtags;
-    focus(NULL);
-    arrange(selmon);
-  }
+  if ( ! selmon->sel ) return;
+  newtags = selmon->sel->tags ^ ( arg->ui & TAGMASK );
+  if ( newtags )
+    {
+      selmon->sel->tags = newtags;
+      focus( NULL );
+      arrange( selmon );
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-toggleview(const Arg *arg)
+  void
+toggleview( const Arg * arg )
 {
-  unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
-
-  if (newtagset) {
-    selmon->tagset[selmon->seltags] = newtagset;
-    focus(NULL);
-    arrange(selmon);
-  }
+  unsigned int newtagset = selmon->tagset[selmon->seltags] ^
+                           ( arg->ui & TAGMASK );
+  if ( newtagset )
+    {
+      selmon->tagset[selmon->seltags] = newtagset;
+      focus( NULL );
+      arrange( selmon );
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-unfocus(Client *c, int setfocus)
+  void
+unfocus( Client * c , int setfocus )
 {
-  if (!c)
-    return;
-  grabbuttons(c, 0);
-  XSetWindowBorder(dpy, c->win, scheme[SchemeNorm][ColBorder].pixel);
-  if (setfocus) {
-    XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
-    XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
-  }
+  if ( ! c ) return;
+  grabbuttons( c, 0 );
+  XSetWindowBorder( dpy, c->win, scheme[SchemeNorm][ColBorder].pixel );
+  if ( setfocus )
+    {
+      XSetInputFocus( dpy, root, RevertToPointerRoot, CurrentTime );
+      XDeleteProperty( dpy, root, netatom[NetActiveWindow] );
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-unmanage(Client *c, int destroyed)
+  void
+unmanage( Client * c, int destroyed )
 {
-  Monitor *m = c->mon;
+  Monitor * m = c->mon;
   XWindowChanges wc;
 
-  detach(c);
-  detachstack(c);
-  if (!destroyed) {
-    wc.border_width = c->oldbw;
-    XGrabServer(dpy); /* avoid race conditions */
-    XSetErrorHandler(xerrordummy);
-    XConfigureWindow(dpy, c->win, CWBorderWidth, &wc); /* restore border */
-    XUngrabButton(dpy, AnyButton, AnyModifier, c->win);
-    setclientstate(c, WithdrawnState);
-    XSync(dpy, False);
-    XSetErrorHandler(xerror);
-    XUngrabServer(dpy);
-  }
-  free(c);
-  focus(NULL);
-  updateclientlist();
-  arrange(m);
+  detach( c );
+  detachstack( c );
+  if ( ! destroyed )
+    {
+      wc.border_width = c->oldbw;
+      XGrabServer( dpy ); /* avoid race conditions */
+      XSetErrorHandler( xerrordummy );
+      XConfigureWindow( dpy, c->win, CWBorderWidth, &wc ); /* restore border */
+      XUngrabButton( dpy, AnyButton, AnyModifier, c->win );
+      setclientstate( c, WithdrawnState );
+      XSync( dpy, False );
+      XSetErrorHandler( xerror );
+      XUngrabServer( dpy );
+    }
+  free( c );
+  focus( NULL );
+  updateclientlist(  );
+  arrange( m );
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-unmapnotify(XEvent *e)
+  void
+unmapnotify( XEvent * e )
 {
-  Client *c;
-  XUnmapEvent *ev = &e->xunmap;
+  Client * c = NULL;
+  XUnmapEvent * ev = &e->xunmap;
 
-  if ((c = wintoclient(ev->window))) {
-    if (ev->send_event)
-      setclientstate(c, WithdrawnState);
-    else
-      unmanage(c, 0);
-  }
+  if ( ( c = wintoclient( ev->window ) ) )
+    {
+      if ( ev->send_event ) setclientstate( c, WithdrawnState );
+      else                  unmanage( c, 0 );
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-updatebars(void)
+  void
+updatebars( void )
 {
-  Monitor *m;
+  Monitor * m = NULL;
   XSetWindowAttributes wa = {
     .override_redirect = True,
     .background_pixmap = ParentRelative,
-    .event_mask = ButtonPressMask|ExposureMask
+    .event_mask        = ( ButtonPressMask | ExposureMask )
   };
-  XClassHint ch = {"dwm", "dwm"};
-  for (m = mons; m; m = m->next) {
-    if (m->barwin)
-      continue;
-    m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
-        CopyFromParent, DefaultVisual(dpy, screen),
-        CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
-    XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
-    XMapRaised(dpy, m->barwin);
-    XSetClassHint(dpy, m->barwin, &ch);
-  }
+  XClassHint ch = { "dwm", "dwm" };
+  for ( m = mons; m; m = m->next )
+    {
+      if ( m->barwin ) continue;
+      m->barwin =
+        XCreateWindow( dpy, root, m->wx, m->by, m->ww, bh, 0,
+                       DefaultDepth( dpy, screen ),
+                       CopyFromParent, DefaultVisual( dpy, screen ),
+                       ( CWOverrideRedirect | CWBackPixmap | CWEventMask ),
+                       & wa
+                     );
+      XDefineCursor( dpy, m->barwin, cursor[CurNormal]->cursor );
+      XMapRaised( dpy, m->barwin );
+      XSetClassHint( dpy, m->barwin, & ch );
+    }
 }
 
 
