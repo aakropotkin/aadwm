@@ -1,28 +1,28 @@
 {
-  description = "Alex Ameen's DWM Config";
+  description = "My DWM Config";
 
-  outputs = { self, nixpkgs, ... }:
-    let
-      supportedSystems = [ "x86_64-linux" "i686-linux" "aarch64-linux" ];
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems ( sys: f sys );
-      version = "0.1.${nixpkgs.lib.substring 0 8 " +
-                "self.lastModifiedDate}.${self.shortRev or "dirty"}";
+  inputs.utils.url = github:numtide/flake-utils;
+
+  outputs = { self, nixpkgs, utils }:
+    let defaultSystemsMap = utils.lib.eachSystemMap utils.lib.defaultSystems;
     in {
-      packages = forAllSystems ( system:
-        let
-          pkgsFor = nixpkgs.legacyPackages.${system};
+      packages = defaultSystemsMap ( system:
+        let pkgsFor = import nixpkgs { inherit system; };
         in rec {
-          aa-dwm = pkgsFor.stdenv.mkDerivation {
-            name = "aa-dwm";
+          ak-dwm = pkgsFor.stdenv.mkDerivation {
+            pname = "ak-dwm";
+            version = "0.0.1";
             src  = self;
-            depsTargetTarget = with pkgsFor.xorg; [libX11 libXinerama libXft];
+            depsTargetTarget = with pkgsFor.xorg; [
+              libX11 libXinerama libXft
+            ];
             prePatch = ''
-              sed -i "s@/usr/local@$out@" config.mk
+              sed -i "s/\/usr\/local/$out/" config.mk
             '';
           };
-        default = aa-dwm;
+        default = ak-dwm;
       } );
       defaultPackage =
-        forAllSystems ( system: self.packages.${system}.default );
+        defaultSystemsMap ( system: self.packages.${system}.default );
     };
 }
