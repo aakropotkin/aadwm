@@ -17,7 +17,7 @@
               libX11 libXinerama libXft
             ];
             prePatch = ''
-              sed -i "s/\/usr\/local/$out/" config.mk
+              sed -i "s,/usr/local,$out," config.mk
             '';
           };
         default = ak-dwm;
