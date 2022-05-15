@@ -2,6 +2,7 @@
   description = "My DWM Config";
 
   inputs.utils.url = github:numtide/flake-utils;
+  inputs.utils.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = { self, nixpkgs, utils }:
     let defaultSystemsMap = utils.lib.eachSystemMap utils.lib.defaultSystems;
@@ -22,7 +23,9 @@
           };
         default = ak-dwm;
       } );
-      defaultPackage =
-        defaultSystemsMap ( system: self.packages.${system}.default );
-    };
+    } // ( if ( ( builtins.compareVersions __nixVersion "2.7.0" ) <= 0 )
+           then {
+             defaultPackage =
+               defaultSystemsMap ( system: self.packages.${system}.default );
+           } else {} );
 }
