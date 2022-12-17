@@ -37,6 +37,14 @@ typedef struct {
 
 /* -------------------------------------------------------------------------- */
 
+struct Clientlist {
+  Client * clients;
+  Client * stack;
+};
+
+
+/* -------------------------------------------------------------------------- */
+
 typedef union {
         int            i;
         unsigned int   ui;
@@ -58,8 +66,9 @@ typedef struct {
 
 /* -------------------------------------------------------------------------- */
 
-typedef struct Monitor Monitor;
-typedef struct Client Client;
+typedef struct Clientlist  Clientlist;
+typedef struct Monitor     Monitor;
+typedef struct Client      Client;
 struct Client {
   char name[256];
   float mina, maxa;
@@ -109,10 +118,9 @@ struct Monitor {
   unsigned int tagset[2];
   int showbar;
   int topbar;
-  Client *clients;
-  Client *sel;
-  Client *stack;
-  Monitor *next;
+  Clientlist * cl;
+  Client     * sel;
+  Monitor    * next;
   Window barwin;
   const Layout *lt[2];
 };
