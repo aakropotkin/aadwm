@@ -263,7 +263,7 @@ applyrules( Client * c )
           c->tags |= r->tags;
           for (
             m = mons;
-            m && ( ( m->tagset[m->seltags] & c->tags ) == 0 )
+            m && ( ( m->tagset[m->seltags] & c->tags ) == 0 );
             m = m->next
           );
           if ( m )
@@ -463,7 +463,7 @@ void
 attachstack( Client * c )
 {
   c->snext = c->mon->cl->stack;
-  c->mon->stack = c;
+  c->mon->cl->stack = c;
 }
 
 
@@ -933,7 +933,7 @@ void
 focus(Client *c)
 {
   if ( ! c || ! ISVISIBLE( c, selmon ) )
-    for (c = selmon->stack; c && !ISVISIBLE( c, selmon ); c = c->snext);
+    for ( c = selmon->cl->stack; c && !ISVISIBLE( c, selmon ); c = c->snext );
   if (selmon->sel && selmon->sel != c)
     unfocus(selmon->sel, 0);
   if (c) {
@@ -1338,7 +1338,7 @@ monocle(Monitor *m)
       n++;
   if (n > 0) /* override layout symbol */
     snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
-  for (c = nexttiled(m->cl->clients); c; c = nexttiled(c->next))
+  for ( c = nexttiled( m->cl->clients, m ); c; c = nexttiled( c->next, m ) )
     resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 }
 
@@ -2037,9 +2037,9 @@ tile_vsplit( Monitor * m )
   Client       * c  = NULL;
 
   /* Count number of clients. */
-  for ( n = 0, c = nexttiled( m->cl->clients );
+  for ( n = 0, c = nexttiled( m->cl->clients, m );
         c != NULL;
-        c = nexttiled( c->next ), n++
+        c = nexttiled( c->next, m ), n++
       ) noop;
 
   /* If there aren't any clients bail out. */
@@ -2059,9 +2059,9 @@ tile_vsplit( Monitor * m )
   else                        mw = m->ww;             /* Full width */
 
   /* Resize and move clients. */
-  for ( i = 0, my = 0, ty = 0, c = nexttiled( m->cl->clients );
+  for ( i = 0, my = 0, ty = 0, c = nexttiled( m->cl->clients, m );
         c != NULL;
-        c = nexttiled( c->next ), i++
+        c = nexttiled( c->next, m ), i++
       )
     {
       /* Handle members of the master tile vs reular tile. */
@@ -2117,9 +2117,9 @@ tile_hsplit( Monitor * m )
   Client       * c  = NULL;
 
   /* Count number of clients. */
-  for ( n = 0, c = nexttiled( m->cl->clients );
+  for ( n = 0, c = nexttiled( m->cl->clients, m );
         c != NULL;
-        c = nexttiled( c->next ), n++
+        c = nexttiled( c->next, m ), n++
       ) noop;
 
   /* If there aren't any clients bail out. */
@@ -2130,9 +2130,9 @@ tile_hsplit( Monitor * m )
   else                        mh = m->wh;             /* Full height */
 
   /* Resize and move clients. */
-  for ( i = 0, mx = 0, tx = 0, c = nexttiled( m->cl->clients );
+  for ( i = 0, mx = 0, tx = 0, c = nexttiled( m->cl->clients, m );
         c != NULL;
-        c = nexttiled( c->next ), i++
+        c = nexttiled( c->next, m ), i++
       )
     {
       /* Handle members of the master tile vs reular tile. */
@@ -2238,7 +2238,7 @@ toggleview( const Arg * arg )
       /* prevent displaying the same tags on multiple monitors */
       for ( m = mons; m; m = m->next )
         {
-          if ( ( m != selmon ) && ( newtags & m->tagset[m->seltags] ) )
+          if ( ( m != selmon ) && ( newtagset & m->tagset[m->seltags] ) )
             {
               return;
             }

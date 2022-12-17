@@ -37,14 +37,6 @@ typedef struct {
 
 /* -------------------------------------------------------------------------- */
 
-struct Clientlist {
-  Client * clients;
-  Client * stack;
-};
-
-
-/* -------------------------------------------------------------------------- */
-
 typedef union {
         int            i;
         unsigned int   ui;
@@ -82,6 +74,14 @@ struct Client {
   Client *snext;
   Monitor *mon;
   Window win;
+};
+
+
+/* -------------------------------------------------------------------------- */
+
+struct Clientlist {
+  Client * clients;
+  Client * stack;
 };
 
 
