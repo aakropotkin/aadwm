@@ -5,7 +5,7 @@
 
     eachDefaultSystemMap = fn: let
       defaultSystems = ["x86_64-linux" "aarch64-linux" "i686-linux"];
-      proc           = name: { inherit name; value = fn value; };
+      proc           = name: { inherit name; value = fn name; };
     in builtins.listToAttrs ( map proc defaultSystems );
 
     overlays.ak-dwm = final: prev: {
