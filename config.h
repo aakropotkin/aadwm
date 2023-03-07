@@ -30,12 +30,12 @@ static const Rule rules[] = {
   /* class          instance    title       tags mask     isfloating   monitor */
   { "Gimp",         NULL,       NULL,       0,            1,           -1 },
   { "Firefox",      NULL,       NULL,       1 << 8,       0,           -1 },
-  { "stalonetray",  NULL,       NULL,       0,            1,           -1 },
+  { "stalonetray",  NULL,       NULL,       0,            1,           2 },
 };
 
 /* layout(s) */
-static const float mfact     = 0.5;  /* factor of master area size [0.05..0.95] */
-static const int nmaster     = 1;    /* number of clients in master area */
+static const float mfact   = 0.5;  /* factor of master area size [0.05..0.95] */
+static const int   nmaster = 1;    /* number of clients in master area */
 /* 1 means respect size hints in tiled resizals.
  * Window size hints usually cause ugly gaps, and you probably don't want them.
  */
