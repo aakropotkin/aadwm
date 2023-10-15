@@ -854,13 +854,12 @@ detachstack( Client * c )
 
   if ( c == c->mon->sel )
     {
-      for (
-        t = c->mon->cl->stack;
-        t && ( ! ISVISIBLE( t, c->mon ) );
-        t = t->snext
-      );
+      for ( t = c->mon->cl->stack;
+            ( t != NULL ) && ( ! ISVISIBLE( t, c->mon ) );
+            t = t->snext
+          );
       c->mon->sel = t;
-  }
+    }
 }
 
 
