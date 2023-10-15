@@ -1488,7 +1488,7 @@ nexttiled( Client * c, Monitor * m )
 /* -------------------------------------------------------------------------- */
 
 void
-pop(Client *c)
+pop( Client *c)
 {
   detach(c);
   attach(c);
@@ -2350,13 +2350,13 @@ unmanage( Client * c, int destroyed )
   void
 unmapnotify( XEvent * e )
 {
-  Client * c = NULL;
-  XUnmapEvent * ev = &e->xunmap;
+  XUnmapEvent * ev = & e->xunmap;
+  Client      * c  = wintoclient( ev->window );
 
-  if ( ( c = wintoclient( ev->window ) ) )
+  if ( c != NULL )
     {
-      if ( ev->send_event ) setclientstate( c, WithdrawnState );
-      else                  unmanage( c, 0 );
+      if ( ev->send_event ) { setclientstate( c, WithdrawnState ); }
+      else                  { unmanage( c, 0 ); }
     }
 }
 
@@ -2366,14 +2366,13 @@ unmapnotify( XEvent * e )
   void
 updatebars( void )
 {
-  Monitor * m = NULL;
   XSetWindowAttributes wa = {
     .override_redirect = True,
     .background_pixmap = ParentRelative,
     .event_mask        = ( ButtonPressMask | ExposureMask )
   };
   XClassHint ch = { "dwm", "dwm" };
-  for ( m = mons; m; m = m->next )
+  for ( Monitor * m = mons; m != NULL; m = m->next )
     {
       if ( m->barwin ) continue;
       m->barwin =
@@ -2397,12 +2396,16 @@ updatebarpos(Monitor *m)
 {
   m->wy = m->my;
   m->wh = m->mh;
-  if (m->showbar) {
-    m->wh -= bh;
-    m->by = m->topbar ? m->wy : m->wy + m->wh;
-    m->wy = m->topbar ? m->wy + bh : m->wy;
-  } else
-    m->by = -bh;
+  if ( m->showbar )
+    {
+      m->wh -= bh;
+      m->by = m->topbar ? m->wy : m->wy + m->wh;
+      m->wy = m->topbar ? m->wy + bh : m->wy;
+    }
+  else
+    {
+      m->by = -bh;
+    }
 }
 
 
