@@ -543,7 +543,7 @@ buttonpress( XEvent * e )
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 checkotherwm( void )
 {
   xerrorxlib = XSetErrorHandler( xerrorstart );
@@ -557,7 +557,7 @@ checkotherwm( void )
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 cleanup( void )
 {
   Arg       a   = { .ui = ~0 };
@@ -591,95 +591,114 @@ cleanup( void )
 
 /* -------------------------------------------------------------------------- */
 
-void
-cleanupmon(Monitor *mon)
+  void
+cleanupmon( Monitor * mon )
 {
-  Monitor *m;
+  Monitor * m;
 
-  if (mon == mons)
-    mons = mons->next;
-  else {
-    for (m = mons; m && m->next != mon; m = m->next);
-    m->next = mon->next;
-  }
-  XUnmapWindow(dpy, mon->barwin);
-  XDestroyWindow(dpy, mon->barwin);
-  free(mon);
+  if ( mon == mons )
+    {
+      mons = mons->next;
+    }
+  else
+    {
+      for ( m = mons; m && m->next != mon; m = m->next );
+      m->next = mon->next;
+    }
+  XUnmapWindow( dpy, mon->barwin );
+  XDestroyWindow( dpy, mon->barwin );
+  free( mon );
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-clientmessage(XEvent *e)
+  void
+clientmessage( XEvent * e )
 {
-  XClientMessageEvent *cme = &e->xclient;
-  Client *c = wintoclient(cme->window);
+  XClientMessageEvent * cme = & e->xclient;
+  Client              * c   = wintoclient( cme->window );
 
-  if (!c)
-    return;
-  if (cme->message_type == netatom[NetWMState]) {
-    if (cme->data.l[1] == netatom[NetWMFullscreen]
-    || cme->data.l[2] == netatom[NetWMFullscreen])
-      setfullscreen(c, (cme->data.l[0] == 1 /* _NET_WM_STATE_ADD    */
-        || (cme->data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ && !c->isfullscreen)));
-  } else if (cme->message_type == netatom[NetActiveWindow]) {
-    if (c != selmon->sel && !c->isurgent)
-      seturgent(c, 1);
-  }
+  if ( c == NULL ) { return; }
+  if ( cme->message_type == netatom[NetWMState] )
+    {
+      if ( ( cme->data.l[1] == netatom[NetWMFullscreen] ) ||
+           ( cme->data.l[2] == netatom[NetWMFullscreen] )
+         )
+        {
+          setfullscreen(
+            c
+          , ( ( cme->data.l[0] == 1 ) || /* _NET_WM_STATE_ADD */
+              /* _NET_WM_STATE_TOGGLE */
+              ( ( cme->data.l[0] == 2 ) && ( ! c->isfullscreen ) )
+            )
+          );
+        }
+    }
+  else if ( cme->message_type == netatom[NetActiveWindow] )
+    {
+      if ( ( c != selmon->sel ) && ( ! c->isurgent ) ) { seturgent( c, 1 ); }
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-configure(Client *c)
+  void
+configure( Client * c )
 {
   XConfigureEvent ce;
 
-  ce.type = ConfigureNotify;
-  ce.display = dpy;
-  ce.event = c->win;
-  ce.window = c->win;
-  ce.x = c->x;
-  ce.y = c->y;
-  ce.width = c->w;
-  ce.height = c->h;
-  ce.border_width = c->bw;
-  ce.above = None;
+  ce.type              = ConfigureNotify;
+  ce.display           = dpy;
+  ce.event             = c->win;
+  ce.window            = c->win;
+  ce.x                 = c->x;
+  ce.y                 = c->y;
+  ce.width             = c->w;
+  ce.height            = c->h;
+  ce.border_width      = c->bw;
+  ce.above             = None;
   ce.override_redirect = False;
-  XSendEvent(dpy, c->win, False, StructureNotifyMask, (XEvent *)&ce);
+  XSendEvent( dpy, c->win, False, StructureNotifyMask, (XEvent *) & ce );
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 configurenotify( XEvent * e )
 {
-  Monitor *m;
-  Client *c;
-  XConfigureEvent *ev = &e->xconfigure;
-  int dirty;
+  Monitor         * m     = NULL;
+  Client          * c     = NULL;
+  XConfigureEvent * ev    = & e->xconfigure;
+  int               dirty;
 
   /* TODO: updategeom handling sucks, needs to be simplified */
-  if (ev->window == root) {
-    dirty = (sw != ev->width || sh != ev->height);
-    sw = ev->width;
-    sh = ev->height;
-    if (updategeom() || dirty) {
-      drw_resize(drw, sw, bh);
-      updatebars();
-      for ( m = mons; m; m = m->next ) {
-        for (c = m->cl->clients; c; c = c->next)
-          if (c->isfullscreen)
-            resizeclient(c, m->mx, m->my, m->mw, m->mh);
-        XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
-      }
-      focus(NULL);
-      arrange(NULL);
+  if ( ev->window == root )
+    {
+      dirty = ( sw != ev->width ) || ( sh != ev->height );
+      sw = ev->width;
+      sh = ev->height;
+      if ( updategeom() || dirty )
+        {
+          drw_resize( drw, sw, bh );
+          updatebars();
+          for ( m = mons; m; m = m->next )
+            {
+              for ( c = m->cl->clients; c; c = c->next )
+                {
+                  if ( c->isfullscreen )
+                    {
+                      resizeclient( c, m->mx, m->my, m->mw, m->mh );
+                    }
+                }
+              XMoveResizeWindow( dpy, m->barwin, m->wx, m->by, m->ww, bh );
+            }
+          focus( NULL );
+          arrange( NULL );
+        }
     }
-  }
 }
 
 
@@ -743,14 +762,16 @@ configurerequest( XEvent * e )
 Monitor *
 createmon(void)
 {
-  Monitor * m, * tm;
-  int i;
+  Monitor * m  = NULL;
+  Monitor * tm = NULL;
+  int       i;
   /* bail out if the number of monitors exceeds the number of tags */
-  for ( i = 1, tm=mons; tm; i++, tm=tm->next );
+  for ( i = 1, tm = mons; tm; i++, tm = tm->next );
   if ( LENGTH( tags ) < i )
     {
       fprintf(
-        stderr, "dwm: failed to add monitor, number of tags exceeded\n"
+        stderr
+      , "dwm: failed to add monitor, number of tags exceeded\n"
       );
       return NULL;
     }
@@ -778,54 +799,58 @@ createmon(void)
         }
     }
 
-  m = ecalloc( 1, sizeof( Monitor ) );
-  m->cl = cl;
+  m            = ecalloc( 1, sizeof( Monitor ) );
+  m->cl        = cl;
   m->tagset[0] = m->tagset[1] = ( 1 << i ) & TAGMASK;
-  m->mfact = mfact;
-  m->nmaster = nmaster;
-  m->showbar = showbar;
-  m->topbar = topbar;
-  m->lt[0] = &layouts[0];
-  m->lt[1] = &layouts[1 % LENGTH( layouts )];
-  strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+  m->mfact     = mfact;
+  m->nmaster   = nmaster;
+  m->showbar   = showbar;
+  m->topbar    = topbar;
+  m->lt[0]     = & layouts[0];
+  m->lt[1]     = & layouts[1 % LENGTH( layouts )];
+  strncpy( m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol );
   return m;
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
-destroynotify(XEvent *e)
+  void
+destroynotify( XEvent * e )
 {
-  Client *c;
-  XDestroyWindowEvent *ev = &e->xdestroywindow;
-
-  if ((c = wintoclient(ev->window)))
-    unmanage(c, 1);
+  XDestroyWindowEvent * ev = & e->xdestroywindow;
+  Client              * c  = wintoclient( ev->window );
+  if ( c != NULL ) { unmanage( c, 1 ); }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 detach( Client * c )
 {
-  Client ** tc;
-
-  for ( tc = &c->mon->cl->clients; *tc && *tc != c; tc = &(*tc)->next );
-  *tc = c->next;
+  Client ** tc = NULL;
+  for ( tc = & c->mon->cl->clients;
+        ( ( * tc ) != NULL ) && ( ( * tc ) != c );
+        tc = & ( * tc )->next
+      );
+  * tc = c->next;
 }
 
 
 /* -------------------------------------------------------------------------- */
 
-void
+  void
 detachstack( Client * c )
 {
-  Client ** tc, * t;
+  Client ** tc = NULL;
+  Client *  t  = NULL;
 
-  for ( tc = & c->mon->cl->stack; *tc && *tc != c; tc = &(*tc)->snext );
-  *tc = c->snext;
+  for ( tc = & c->mon->cl->stack;
+        ( ( * tc ) != NULL ) && ( ( * tc ) != c );
+        tc = & ( * tc )->snext
+      );
+  * tc = c->snext;
 
   if ( c == c->mon->sel )
     {
@@ -918,13 +943,10 @@ drawbar(Monitor *m)
 
 /* -------------------------------------------------------------------------- */
 
-void
-drawbars(void)
+  void
+drawbars()
 {
-  Monitor *m;
-
-  for (m = mons; m; m = m->next)
-    drawbar(m);
+  for ( Monitor * m = mons; m; m = m->next ) { drawbar( m ); }
 }
 
 
@@ -966,7 +988,7 @@ expose(XEvent *e)
 /* -------------------------------------------------------------------------- */
 
 void
-focus( Client *c )
+focus( Client * c )
 {
   if ( ! c || ! ISVISIBLE( c, selmon ) )
     {
@@ -2792,26 +2814,41 @@ zoom( const Arg * arg )
 /* -------------------------------------------------------------------------- */
 
 int
-main(int argc, char *argv[])
+main( int argc, char * argv[] )
 {
-  if (argc == 2 && !strcmp("-v", argv[1]))
-    die("dwm-"VERSION);
-  else if (argc != 1)
-    die("usage: dwm [-v]");
-  if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
-    fputs("warning: no locale support\n", stderr);
-  if (!(dpy = XOpenDisplay(NULL)))
-    die("dwm: cannot open display");
+
+  if ( ( argc == 2 ) && ( ! strcmp( "-v", argv[1] ) ) )
+    {
+      die( "dwm-"VERSION );
+    }
+  else if ( argc != 1 )
+    {
+      die( "usage: dwm [-v]" );
+    }
+
+  if ( ! setlocale( LC_CTYPE, "" ) || ( ! XSupportsLocale() ) )
+    {
+      fputs( "warning: no locale support\n", stderr );
+    }
+
+  if ( ! (dpy = XOpenDisplay( NULL ) ) )
+    {
+      die( "dwm: cannot open display" );
+    }
+
   checkotherwm();
   setup();
+
 #ifdef __OpenBSD__
   if (pledge("stdio rpath proc exec", NULL) == -1)
     die("pledge");
 #endif /* __OpenBSD__ */
+
   scan();
   run();
   cleanup();
-  XCloseDisplay(dpy);
+  XCloseDisplay( dpy );
+
   return EXIT_SUCCESS;
 }
 
