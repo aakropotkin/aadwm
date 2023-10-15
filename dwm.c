@@ -411,7 +411,7 @@ attach( Client * c )
 void
 attachclients( Monitor * m )
 {
-  /* attach clients to the specified monitor */
+  /* Attach clients to the specified monitor */
   Monitor *tm;
   Client *c;
   unsigned int utags = 0;
@@ -419,7 +419,7 @@ attachclients( Monitor * m )
 
   if ( ! m ) return;
 
-  /* collect information about the tags in use */
+  /* Collect information about the tags in use */
   for ( tm = mons; tm; tm = tm->next )
     {
       if ( tm != m )
@@ -432,8 +432,8 @@ attachclients( Monitor * m )
     {
       if ( ISVISIBLE( c, m ) )
         {
-          /* if client is also visible on other tags that are displayed on
-          * other monitors, remove these tags */
+          /* If client is also visible on other tags that are displayed on
+           * other monitors, remove these tags. */
           if ( c->tags & utags )
             {
               c->tags = c->tags & m->tagset[m->seltags];
@@ -470,59 +470,88 @@ attachstack( Client * c )
 /* -------------------------------------------------------------------------- */
 
 void
-buttonpress(XEvent *e)
+buttonpress( XEvent * e )
 {
-  unsigned int i, x, click;
-  Arg arg = {0};
-  Client *c;
-  Monitor *m;
-  XButtonPressedEvent *ev = &e->xbutton;
+  unsigned int          i     = 0;
+  unsigned int          x     = 0;
+  unsigned int          click = ClkRootWin;
+  Arg                   arg   = { 0 };
+  Client              * c     = NULL;
+  Monitor             * m     = NULL;
+  XButtonPressedEvent * ev    = & e->xbutton;
 
-  click = ClkRootWin;
-  /* focus monitor if necessary */
-  if ((m = wintomon(ev->window)) && m != selmon) {
-    unfocus(selmon->sel, 1);
-    selmon = m;
-    focus(NULL);
-  }
-  if (ev->window == selmon->barwin) {
-    i = x = 0;
-    do
-      x += TEXTW(tags[i]);
-    while (ev->x >= x && ++i < LENGTH(tags));
-    if (i < LENGTH(tags)) {
-      click = ClkTagBar;
-      arg.ui = 1 << i;
-    } else if (ev->x < x + blw)
-      click = ClkLtSymbol;
-    else if (ev->x > selmon->ww - (int)TEXTW(stext))
-      click = ClkStatusText;
-    else
-      click = ClkWinTitle;
-  } else if ((c = wintoclient(ev->window))) {
-    focus(c);
-    restack(selmon);
-    XAllowEvents(dpy, ReplayPointer, CurrentTime);
-    click = ClkClientWin;
-  }
-  for (i = 0; i < LENGTH(buttons); i++)
-    if (click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
-    && CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
-      buttons[i].func(click == ClkTagBar && buttons[i].arg.i == 0 ? &arg : &buttons[i].arg);
+  /* Focus monitor if necessary */
+  if ( ( m = wintomon( ev->window ) ) && ( m != selmon ) )
+    {
+      unfocus( selmon->sel, 1 );
+      selmon = m;
+      focus( NULL );
+    }
+
+  if ( ev->window == selmon->barwin )
+    {
+      i = 0;
+      x = 0;
+      do
+        {
+          x += TEXTW( tags[i] );
+        }
+      while ( ( x <= ev->x ) && ( ++i < LENGTH( tags ) ) );
+
+      if ( i < LENGTH( tags ) )
+        {
+          click = ClkTagBar;
+          arg.ui = 1 << i;
+        }
+      else if ( ev->x < ( x + blw ) )
+        {
+          click = ClkLtSymbol;
+        }
+      else if ( ev->x > selmon->ww - ( (int) TEXTW( stext ) ) )
+        {
+          click = ClkStatusText;
+        }
+      else
+        {
+          click = ClkWinTitle;
+        }
+    }
+  else if ( ( c = wintoclient( ev->window ) ) )
+    {
+      focus( c );
+      restack( selmon );
+      XAllowEvents( dpy, ReplayPointer, CurrentTime );
+      click = ClkClientWin;
+    }
+
+  for ( i = 0; i < LENGTH( buttons ); i++ )
+    {
+      if ( ( click == buttons[i].click )                            &&
+           ( buttons[i].func && buttons[i].button == ev->button )   &&
+           ( CLEANMASK(buttons[i].mask) == CLEANMASK( ev->state ) )
+         )
+        {
+          buttons[i].func(
+            ( click == ClkTagBar ) && ( buttons[i].arg.i == 0 )
+            ? & arg
+            : & buttons[i].arg
+          );
+        }
+    }
 }
 
 
 /* -------------------------------------------------------------------------- */
 
 void
-checkotherwm(void)
+checkotherwm( void )
 {
-  xerrorxlib = XSetErrorHandler(xerrorstart);
+  xerrorxlib = XSetErrorHandler( xerrorstart );
   /* this causes an error if some other window manager is running */
-  XSelectInput(dpy, DefaultRootWindow(dpy), SubstructureRedirectMask);
-  XSync(dpy, False);
-  XSetErrorHandler(xerror);
-  XSync(dpy, False);
+  XSelectInput( dpy, DefaultRootWindow( dpy ), SubstructureRedirectMask );
+  XSync( dpy, False );
+  XSetErrorHandler( xerror );
+  XSync( dpy, False );
 }
 
 
@@ -531,28 +560,32 @@ checkotherwm(void)
 void
 cleanup( void )
 {
-  Arg a = {.ui = ~0};
-  Layout foo = { "", NULL };
-  Monitor *m;
-  size_t i;
+  Arg       a   = { .ui = ~0 };
+  Layout    foo = { "", NULL };
+  Monitor * m   = NULL;
+  size_t    i   = 0;
 
-  view(&a);
-  selmon->lt[selmon->sellt] = &foo;
-  for (m = mons; m; m = m->next)
-    while (m->cl->stack)
-      unmanage(m->cl->stack, 0);
-  XUngrabKey(dpy, AnyKey, AnyModifier, root);
-  while (mons)
-    cleanupmon(mons);
-  for (i = 0; i < CurLast; i++)
-    drw_cur_free(drw, cursor[i]);
-  for (i = 0; i < LENGTH(colors); i++)
-    free(scheme[i]);
-  XDestroyWindow(dpy, wmcheckwin);
-  drw_free(drw);
-  XSync(dpy, False);
-  XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
-  XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
+  view( & a );
+  selmon->lt[selmon->sellt] = & foo;
+
+  for ( m = mons; m; m = m->next )
+    {
+      while ( m->cl->stack ) { unmanage( m->cl->stack, 0 ); }
+    }
+
+  XUngrabKey( dpy, AnyKey, AnyModifier, root );
+
+  while ( mons ) { cleanupmon( mons ); }
+
+  for ( i = 0; i < CurLast; i++ ) { drw_cur_free( drw, cursor[i] ); }
+
+  for ( i = 0; i < LENGTH( colors ); i++ ) { free( scheme[i] ); }
+
+  XDestroyWindow( dpy, wmcheckwin );
+  drw_free( drw );
+  XSync( dpy, False );
+  XSetInputFocus( dpy, PointerRoot, RevertToPointerRoot, CurrentTime );
+  XDeleteProperty( dpy, root, netatom[NetActiveWindow] );
 }
 
 
