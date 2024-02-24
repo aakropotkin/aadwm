@@ -1,13 +1,19 @@
+/* ========================================================================== *
+ *
+ *
+ *
+ * -------------------------------------------------------------------------- */
+
 #ifndef _DWM_H
-#define _DWM_H
+#  define _DWM_H 1
 
-/* ========================================================================== */
+/* -------------------------------------------------------------------------- */
 
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
-#include <X11/Xproto.h>
-#include <X11/Xutil.h>
-#include <X11/keysym.h>
+#  include <X11/Xatom.h>
+#  include <X11/Xlib.h>
+#  include <X11/Xproto.h>
+#  include <X11/Xutil.h>
+#  include <X11/keysym.h>
 
 
 /* -------------------------------------------------------------------------- */
@@ -16,12 +22,15 @@
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
 enum { SchemeNorm, SchemeSel };                  /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
-       NetWMFullscreen, NetActiveWindow, NetWMWindowType,
-       NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
+       NetSystemTray, NetSystemTrayOP, NetSystemTrayOrientation,
+       NetSystemTrayOrientationHorz, NetWMFullscreen, NetActiveWindow,
+       NetWMWindowType, NetWMWindowTypeDialog, NetClientList, NetLast
+}; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
        ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
 enum { MonPrev, MonNext, Mon0, Mon1, Mon2 }; /* Monitors */
+
 
 /* -------------------------------------------------------------------------- */
 
@@ -136,11 +145,51 @@ struct Monitor
 
 /* -------------------------------------------------------------------------- */
 
-#define noop ( (void) 0 )
+#  define noop ( (void) 0 )
 
 
 /* -------------------------------------------------------------------------- */
 
+int
+sendevent( Window w,
+           Atom   proto,
+           int    m,
+           long   d0,
+           long   d1,
+           long   d2,
+           long   d3,
+           long   d4 );
 
-/* ========================================================================== */
-#endif /* _DWM_H */
+
+/* -------------------------------------------------------------------------- */
+
+int
+applysizehints( Client * c, int * x, int * y, int * w, int * h, int interact );
+
+
+/* -------------------------------------------------------------------------- */
+
+Atom
+getatomprop( Client * c, Atom prop );
+
+
+/* -------------------------------------------------------------------------- */
+
+void
+setclientstate( Client * c, long state );
+
+
+/* -------------------------------------------------------------------------- */
+
+#  define TEXTW( X ) ( drw_fontset_getwidth( drw, ( X ) ) + lrpad )
+
+
+/* -------------------------------------------------------------------------- */
+
+#endif /* ifndef _DWM_H */
+
+/* -------------------------------------------------------------------------- *
+ *
+ *
+ *
+ * ========================================================================== */

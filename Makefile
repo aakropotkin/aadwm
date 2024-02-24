@@ -6,8 +6,10 @@ include config.mk
 dwm.o: dwm.h
 config.h: dwm.h
 
-SRC = drw.c dwm.c util.c
+SRC = drw.c dwm.c util.c systray.c
 OBJ = ${SRC:.c=.o}
+
+dwm.o systray.o: dwm.h systray.h
 
 all: options dwm
 
@@ -22,8 +24,8 @@ options:
 
 ${OBJ}: config.h config.mk
 
-config.h:
-	cp config.def.h $@
+#config.h:
+#	cp config.def.h $@
 
 dwm: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
