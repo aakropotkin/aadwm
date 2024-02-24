@@ -154,12 +154,6 @@ focus( Client * c );
 static void
 focusin( XEvent * e );
 
-static void
-focusmon( const Arg * arg );
-
-static void
-focusstack( const Arg * arg );
-
 static int
 getrootptr( int * x, int * y );
 
@@ -176,13 +170,7 @@ static void
 grabkeys( void );
 
 static void
-incnmaster( const Arg * arg );
-
-static void
 keypress( XEvent * e );
-
-static void
-killclient( const Arg * arg );
 
 static void
 manage( Window w, XWindowAttributes * wa );
@@ -194,13 +182,7 @@ static void
 maprequest( XEvent * e );
 
 static void
-monocle( Monitor * m );
-
-static void
 motionnotify( XEvent * e );
-
-static void
-movemouse( const Arg * arg );
 
 static Client *
 nexttiled( Client * c, Monitor * m );
@@ -211,9 +193,6 @@ pop( Client * );
 static void
 propertynotify( XEvent * e );
 
-static void
-quit( const Arg * arg );
-
 static Monitor *
 recttomon( int x, int y, int w, int h );
 
@@ -222,9 +201,6 @@ resize( Client * c, int x, int y, int w, int h, int interact );
 
 static void
 resizeclient( Client * c, int x, int y, int w, int h );
-
-static void
-resizemouse( const Arg * arg );
 
 static void
 restack( Monitor * m );
@@ -245,15 +221,6 @@ static void
 setfullscreen( Client * c, int fullscreen );
 
 static void
-setlayout( const Arg * arg );
-
-static void
-inclayout( const Arg * arg );
-
-static void
-setmfact( const Arg * arg );
-
-static void
 setup( void );
 
 static void
@@ -264,33 +231,6 @@ showhide( Client * c );
 
 static void
 sigchld( int unused );
-
-static void
-spawn( const Arg * arg );
-
-static void
-tag( const Arg * arg );
-
-static void
-tagmon( const Arg * arg );
-
-static void
-tile_vsplit( Monitor * );
-
-static void
-tile_hsplit( Monitor * );
-
-static void
-togglebar( const Arg * arg );
-
-static void
-togglefloating( const Arg * arg );
-
-static void
-toggletag( const Arg * arg );
-
-static void
-toggleview( const Arg * arg );
 
 static void
 unfocus( Client * c, int setfocus );
@@ -331,9 +271,6 @@ updatewindowtype( Client * c );
 static void
 updatewmhints( Client * c );
 
-static void
-view( const Arg * arg );
-
 static Client *
 wintoclient( Window w );
 
@@ -348,9 +285,6 @@ xerrordummy( Display * dpy, XErrorEvent * ee );
 
 static int
 xerrorstart( Display * dpy, XErrorEvent * ee );
-
-static void
-zoom( const Arg * arg );
 
 
 /* -------------------------------------------------------------------------- */
